@@ -39,6 +39,7 @@ AC_LANG(C)
 # Autoheader
 AH_TEMPLATE([LIQUID_FFTOVERRIDE],  [Force internal FFT even if libfftw is available])
 AH_TEMPLATE([LIQUID_SIMDOVERRIDE], [Force overriding of SIMD (use portable C code)])
+AH_TEMPLATE([LIQUID_AVXOVERRIDE], [Force overriding of AVX (use SSE4.1/2 for SIMD)])
 AH_TEMPLATE([LIQUID_SUPPRESS_ERROR_OUTPUT],[Suppress printing errors to stderr])
 AH_TEMPLATE([LIQUID_STRICT_EXIT],  [Enable strict program exit on error])
 
@@ -62,6 +63,12 @@ AC_ARG_ENABLE(debug-messages,
 AC_ARG_ENABLE(simdoverride,
     AS_HELP_STRING([--enable-simdoverride],[use portable C code for dotprod, etc. even if SIMD extensions are available]),
     [AC_DEFINE(LIQUID_SIMDOVERRIDE)],
+    [],
+)
+
+AC_ARG_ENABLE(avxoverride,
+    AS_HELP_STRING([--enable-avxoverride],[use at most SSE4.1/2 for dotprod, etc. even if AVX extensions are available]),
+    [AC_DEFINE(LIQUID_AVXOVERRIDE)],
     [],
 )
 
@@ -174,21 +181,21 @@ else
         #   AVX512  :   immintrin.h
         AX_EXT
 
-        if [ test "$ax_cv_have_avx512f_ext" = yes ]; then
+        if [ test "$ax_cv_have_avx512f_ext" = yes ] && [ test "${enable_avxoverride+set}" != set ]; then
             # AVX512 extensions
             MLIBS_DOTPROD="src/dotprod/src/dotprod_cccf.avx512f.o \
                            src/dotprod/src/dotprod_crcf.avx512f.o \
                            src/dotprod/src/dotprod_rrrf.avx512f.o \
                            src/dotprod/src/sumsq.avx512f.o"
             ARCH_OPTION='-mavx512f'
-        elif [ test "$ax_cv_have_avx2_ext" = yes ]; then
+        elif [ test "$ax_cv_have_avx2_ext" = yes ] && [ test "${enable_avxoverride+set}" != set ]; then
             # AVX2 extensions
             MLIBS_DOTPROD="src/dotprod/src/dotprod_cccf.avx.o \
                            src/dotprod/src/dotprod_crcf.avx.o \
                            src/dotprod/src/dotprod_rrrf.avx.o \
                            src/dotprod/src/sumsq.avx.o"
             ARCH_OPTION='-mavx2'
-        elif [ test "$ax_cv_have_avx_ext" = yes ]; then
+        elif [ test "$ax_cv_have_avx_ext" = yes ] && [ test "${enable_avxoverride+set}" != set ]; then
             # AVX extensions
             MLIBS_DOTPROD="src/dotprod/src/dotprod_cccf.avx.o \
                            src/dotprod/src/dotprod_crcf.avx.o \
